@@ -1,0 +1,543 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Hello World</title>
+</head>
+<script src="pixi/pixi.min.js"></script>
+<style>
+  * {
+    padding: 0;
+    margin: 0
+  }
+</style>
+
+<body>
+  <script type="text/javascript">
+    let moneyB = 100
+    let moneyR = 100
+
+    let builders = []
+    let spawners = []
+
+    const styleB = new PIXI.TextStyle({fill: "#2F80ED",
+     fontSize: 50*window.devicePixelRatio,
+    fontFamily: "Tahoma",  fontWeight: "bold"});
+    const textB = new PIXI.Text(moneyB+'$', styleB);
+
+    const styleR = new PIXI.TextStyle({fill: "#D24B4B",
+     fontSize: 50*window.devicePixelRatio,
+    fontFamily: "Tahoma",  fontWeight: "bold"});
+    const textR = new PIXI.Text(moneyR+'$', styleR);
+
+
+
+    let units = []
+    let line = 0
+    //реальнные размеры экрана
+    const realHeight = window.innerHeight * window.devicePixelRatio
+    const realWidth = window.innerWidth * window.devicePixelRatio
+
+    let app = new PIXI.Application({
+      width: realWidth,
+      height: realHeight,
+      transparent: true,
+      resolution: 1
+    });
+
+    //заставить css отображать чистые пиксели
+    app.view.style.imageRendering = 'pixelated'
+
+    //подгон под реальный размер css
+    app.view.style.width = `${window.innerWidth}px`
+    app.view.style.height = `${window.innerHeight}px`
+ 
+    //Add the canvas that Pixi automatically created for you to the HTML document
+    document.body.appendChild(app.view);
+
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max+1-min)+min);
+  }
+
+ 
+    const loader = PIXI.Loader.shared;
+    
+    const sprites = {};
+
+    const unitsScene = new PIXI.Container()
+    const interFaceB = new PIXI.Container()
+    const interFaceR = new PIXI.Container()
+
+    app.stage.addChild(unitsScene)
+    app.stage.addChild(interFaceB)
+    app.stage.addChild(interFaceR)
+    
+    
+
+    loader.add('addB', 'img/addB.png')
+    loader.add('addR', 'img/addR.png')
+
+    loader.add('mbB', 'img/mbB.png')
+    loader.add('mbR', 'img/mbR.png')
+    loader.add('mbsB', 'img/mbsB.png')
+    loader.add('mbsR', 'img/mbsR.png')
+
+    loader.add('spawnB', 'img/spawnB.png')
+    loader.add('spawnR', 'img/spawnR.png')
+    loader.add('spwB', 'img/spwB.png')
+    loader.add('spwR', 'img/spwR.png')
+
+    loader.add('shipB', 'img/shipB.png')
+    loader.add('shipR', 'img/shipR.png')
+    loader.add('line', 'img/line.png')
+
+    resSprite = 0
+    loader.load((loader, resources) => {
+      resSprite = resources
+      console.log("ok")
+
+      sprites.addB = new PIXI.Sprite(resources.addB.texture);
+      sprites.addR = new PIXI.Sprite(resources.addR.texture);
+      sprites.line = new PIXI.Sprite(resources.line.texture);
+      
+      sprites.mbB = new PIXI.Sprite(resources.mbB.texture);
+      sprites.mbR = new PIXI.Sprite(resources.mbR.texture);
+      sprites.mbsB = new PIXI.Sprite(resources.mbsB.texture);
+      sprites.mbsR = new PIXI.Sprite(resources.mbsR.texture);
+
+      sprites.spwR = new PIXI.Sprite(resources.spwR.texture);
+      sprites.spwB = new PIXI.Sprite(resources.spwB.texture);
+      sprites.spawnR = new PIXI.Sprite(resources.spawnR.texture);
+      sprites.spawnB = new PIXI.Sprite(resources.spawnB.texture);
+
+      
+     
+
+     
+      
+      
+      for (i in sprites) {
+        sprites[i].height *= window.devicePixelRatio
+        sprites[i].width *= window.devicePixelRatio
+      }
+
+      line = sprites.line
+      line.y = realHeight/2-line.height/2
+      app.stage.addChild(line)
+      
+
+      
+      interFaceB.addChild(sprites.mbB)
+      interFaceB.addChild(sprites.spawnB)
+      interFaceB.addChild(sprites.addB)
+
+      app.stage.addChild(textB)
+      interFaceB.y = realHeight - 200*window.devicePixelRatio - 100
+      interFaceB.x = 100
+      sprites.mbB.x += sprites.mbB.width+100
+      sprites.mbB.y -= 50*window.devicePixelRatio
+      sprites.spawnB.x += sprites.mbB.width*2+200
+      sprites.spawnB.y -= 50*window.devicePixelRatio
+      
+  
+      textB.x = realWidth/2
+      textB.anchor.x = 0.5
+      textB.anchor.y = 0.5
+      textB.y = line.y+line.height+100
+      console.log(line.y)
+
+      
+      interFaceR.addChild(sprites.addR)
+      interFaceR.addChild(sprites.mbR)
+      interFaceR.addChild(sprites.spawnR)
+      interFaceR.y = 100
+      interFaceR.x = realWidth - interFaceR.width - 100
+      sprites.mbR.x -= (sprites.mbR.width+ 100)
+      sprites.spawnR.x -= (sprites.mbR.width*2+ 200)
+
+      
+
+      app.stage.addChild(textR)
+      textR.x = realWidth/2
+      textR.anchor.x = 0.5
+      textR.anchor.y = 0.5
+      textR.y = line.y-100
+      textR.rotation = 3.14
+
+
+
+      
+  
+       sprites.addB.interactive = true 
+       sprites.addB.buttonMode = true 
+       sprites.addB.on('pointerdown', ()=>{
+        if (moneyB - 1 < 0) {
+            return
+          }
+          moneyB -= 1
+         spawnShipB()
+        })
+
+        sprites.addR.interactive = true 
+        sprites.addR.buttonMode = true
+        sprites.addR.on('pointerdown', ()=>{
+          if (moneyR - 1 < 0) {
+            return
+          }
+          moneyR -= 1
+         spawnShipR()
+        })
+
+        sprites.mbB.interactive = true 
+        sprites.mbB.buttonMode = true
+        sprites.mbB.on('pointerdown', ()=>{
+          if (moneyB - 20 < 0) {
+            return
+          }
+          moneyB -= 20
+          spawnMoneyBuilderB()
+         function spawnMoneyBuilderB() {
+           let builder = new PIXI.Sprite(resSprite.mbsB.texture);
+           builder.height *= window.devicePixelRatio
+           builder.width *= window.devicePixelRatio
+           builder.team = 'B'
+           builder.x = getRandomInt(builder.width, window.innerWidth*devicePixelRatio - builder.width)
+           builder.y = getRandomInt(line.y+line.height*window.devicePixelRatio+100*window.devicePixelRatio, realHeight-300*window.devicePixelRatio)
+           while (CheckCollision(builder.x, builder.y, builder.width, builder.height) != false) {  
+            builder.x = getRandomInt(builder.width, window.innerWidth*devicePixelRatio - builder.width)
+           builder.y = getRandomInt(line.y+line.height*window.devicePixelRatio+100*window.devicePixelRatio, realHeight-300*window.devicePixelRatio)
+          
+           }
+           console.log(builder.y)
+           builders.push(builder)
+           unitsScene.addChild(builders[builders.length-1])
+         }
+
+        })
+
+
+        sprites.mbR.interactive = true 
+        sprites.mbR.buttonMode = true
+        sprites.mbR.on('pointerdown', ()=>{
+          if (moneyR - 20 < 0) {
+            return
+          }
+          moneyR -= 20
+          spawnMoneyBuilderR()
+         function spawnMoneyBuilderR() {
+           let builder = new PIXI.Sprite(resSprite.mbsR.texture);
+           builder.height *= window.devicePixelRatio
+           builder.width *= window.devicePixelRatio
+           builder.team = 'R'
+           builder.x = getRandomInt(builder.width, window.innerWidth*devicePixelRatio - builder.width)
+           builder.y = getRandomInt(300*window.devicePixelRatio, line.y-100*window.devicePixelRatio)
+           while (CheckCollision(builder.x, builder.y, builder.width, builder.height) != false) {  
+            builder.x = getRandomInt(builder.width, window.innerWidth*devicePixelRatio - builder.width)
+           builder.y = getRandomInt(300*window.devicePixelRatio, line.y-100*window.devicePixelRatio)
+           }
+           console.log(builder.y)
+           builders.push(builder)
+           unitsScene.addChild(builders[builders.length-1])
+         }
+
+        })
+
+
+        sprites.spawnR.interactive = true 
+        sprites.spawnR.buttonMode = true
+        sprites.spawnR.on('pointerdown', ()=>{
+          if (moneyR - 10 < 0) {
+            return
+          }
+          moneyR -= 10
+          spawnSpawnerR()
+         function spawnSpawnerR() {
+           let spawner = new PIXI.Sprite(resSprite.spwR.texture);
+           spawner.height *= window.devicePixelRatio
+           spawner.width *= window.devicePixelRatio
+           spawner.team = 'R'
+           spawner.time = 180
+           spawner.x = getRandomInt(spawner.width, window.innerWidth*devicePixelRatio - spawner.width)
+           spawner.y = getRandomInt(300*window.devicePixelRatio, line.y-100*window.devicePixelRatio)
+           while (CheckCollision(spawner.x, spawner.y, spawner.width, spawner.height) != false) { 
+            spawner.x = getRandomInt(spawner.width, window.innerWidth*devicePixelRatio - spawner.width)
+           spawner.y = getRandomInt(300*window.devicePixelRatio, line.y-100*window.devicePixelRatio)
+           }
+
+           spawners.push(spawner)
+           unitsScene.addChild(spawners[spawners.length-1])
+         }
+
+        })
+
+        sprites.spawnB.interactive = true 
+        sprites.spawnB.buttonMode = true
+        sprites.spawnB.on('pointerdown', ()=>{
+          if (moneyB - 10 < 0) {
+            return
+          }
+          moneyB -= 10
+          spawnSpawnerB()
+         function spawnSpawnerB() {
+           let spawner = new PIXI.Sprite(resSprite.spwB.texture);
+           spawner.height *= window.devicePixelRatio
+           spawner.width *= window.devicePixelRatio
+           spawner.team = 'B'
+           spawner.time = 180
+           
+           spawner.x = getRandomInt(spawner.width, window.innerWidth*devicePixelRatio - spawner.width)
+           spawner.y = getRandomInt(line.y+line.height*window.devicePixelRatio+100*window.devicePixelRatio, realHeight-300*window.devicePixelRatio)
+           while (CheckCollision(spawner.x, spawner.y, spawner.width, spawner.height) != false) {
+            spawner.x = getRandomInt(spawner.width, window.innerWidth*devicePixelRatio - spawner.width)
+            spawner.y = getRandomInt(line.y+line.height*window.devicePixelRatio+100*window.devicePixelRatio, realHeight-300*window.devicePixelRatio)
+           }
+           spawners.push(spawner)
+           unitsScene.addChild(spawners[spawners.length-1])
+         }
+
+        })
+       render()
+    })
+
+    function CheckCollision(x, y, w, h) {
+      let result = false
+      for (i in builders) {
+        let xtr = false
+        let ytr = false
+      if (builders[i].x <= x && x <= builders[i].x+builders[i].width){
+        xtr = true
+      }
+      if (builders[i].x <= x+w && x+w <= builders[i].x+builders[i].width){
+        xtr = true
+      }
+
+      if (builders[i].y <= y && y <= builders[i].y+builders[i].height){
+        ytr = true
+      }
+      if (builders[i].y <= y+h && y+h <= builders[i].y+builders[i].height){
+        ytr = true
+      }
+      
+      if (xtr && ytr) {
+        result = true
+        break
+      }
+
+      }
+      for (i in spawners) {
+        let xtr = false
+        let ytr = false
+      if (spawners[i].x <= x && x <= spawners[i].x+spawners[i].width){
+        xtr = true
+      }
+      if (spawners[i].x <= x+w && x+w <= spawners[i].x+spawners[i].width){
+        xtr = true
+      }
+
+      if (spawners[i].y <= y && y <= spawners[i].y+spawners[i].height){
+        ytr = true
+      }
+      if (spawners[i].y <= y+h && y+h <= spawners[i].y+spawners[i].height){
+        ytr = true
+      }
+      
+      if (xtr && ytr) {
+        result = true
+        break
+      }
+
+      }
+      console.log(result)
+      return result
+    }
+    function createShipR() {
+      let obj = {}
+      obj = new PIXI.Sprite(resSprite.shipR.texture);
+      obj.height *= window.devicePixelRatio
+      obj.width *= window.devicePixelRatio
+      return obj
+    }
+
+    function spawnShipR(x, y) {
+      let ship = createShipR()
+      
+      ship.x = x || getRandomInt(0, window.innerWidth*devicePixelRatio - ship.width)
+      ship.ax = 0
+      ship.ay = 0.5
+      ship.speedX = 0
+      ship.speedY = 1
+      ship.y = y || 0
+
+      units.push(ship)
+      unitsScene.addChild(units[units.length-1])
+    }
+
+    function createShipB() {
+      let obj = {}
+      obj = new PIXI.Sprite(resSprite.shipB.texture);
+      obj.height *= window.devicePixelRatio
+      obj.width *= window.devicePixelRatio
+
+
+      return obj
+    }
+    function spawnShipB(x,y) {
+      let ship = createShipB()
+      ship.x = x || getRandomInt(ship.width, window.innerWidth*devicePixelRatio - ship.width)
+      ship.ax = 0
+      ship.ay = -0.5
+      ship.speedX = 0
+      ship.speedY = -1
+      ship.y = y || window.innerHeight*devicePixelRatio - ship.height
+
+      units.push(ship)
+      unitsScene.addChild(units[units.length-1])
+    }
+   
+    function render() {
+ 
+
+    moneyB += 0.01
+    moneyR += 0.01
+
+    for (i in builders) {
+    if (builders[i].team == 'B') {
+      if (line.y+line.height >= builders[i].y) {
+      unitsScene.removeChild(builders[i])
+      builders.splice(i,1)
+      } else {
+        moneyB += 0.01
+      }
+     
+    } else {
+      
+      if (builders[i].team == 'R') {
+        if (line.y <= builders[i].y+builders[i].height ) {
+      unitsScene.removeChild(builders[i])
+      builders.splice(i,1)
+      } else {
+      moneyR += 0.01
+    }
+      }
+    }
+    
+  
+    }
+
+    for (i in spawners) {
+      spawners[i].time -= 1
+      if (spawners[i].team == 'B') {
+
+        if (line.y+line.height >= spawners[i].y) {
+          unitsScene.removeChild(spawners[i])
+          spawners.splice(i,1) 
+        } else {
+        if (spawners[i].time <= 0) {
+          spawners[i].time = 180
+          spawnShipB(spawners[i].x-30, spawners[i].y-30)
+        }
+      }
+        
+      } else {
+        if (spawners[i].team == 'R') {
+          if (line.y <= spawners[i].y+spawners[i].height ) {
+      unitsScene.removeChild(spawners[i])
+      spawners.splice(i,1) } else {
+        if (spawners[i].time <= 0) {
+          spawners[i].time = 180
+          spawnShipR(spawners[i].x-30, spawners[i].y-30)
+        }
+      }
+        
+      } 
+      }
+    }
+
+    textR.text = moneyR.toFixed(1)+'$'
+    textB.text = moneyB.toFixed(1)+'$'
+
+
+      for (i in units) {
+        units[i].y += units[i].speedY
+        units[i].speedY += units[i].ay
+        if (units[i].y+20 <= line.y+line.height && units[i].speedY < 0) {
+          unitsScene.removeChild(units[i])
+          line.y -= 10*window.devicePixelRatio
+          units.splice(i,1)
+        } else {
+          if (units[i].y+units[i].height-20 >= line.y && units[i].speedY > 0) {
+          unitsScene.removeChild(units[i])
+          line.y += 10*window.devicePixelRatio
+          units.splice(i,1)
+        }
+        }
+
+        
+      }
+      textB.y = line.y+line.height+100
+      textR.y = line.y-100
+
+      if (line.y < sprites.addR.height+100) {
+        console.log("game Over")
+
+        const finallyR = new PIXI.TextStyle({fill: "#2F80ED",
+        fontSize: 200*window.devicePixelRatio,
+        fontFamily: "Tahoma",  fontWeight: "bold"});
+
+        let finaly = new PIXI.Text('BLUE WIN', finallyR);
+        finaly.anchor.x = 0.5
+        finaly.anchor.y = 0.5
+        finaly.x = realWidth/2
+        finaly.y = realHeight/2
+        finaly.rotation = 1.55
+
+        app.stage.removeChild(interFaceB)
+        app.stage.removeChild(interFaceR)
+        app.stage.removeChild(line)
+        app.stage.removeChild(unitsScene)
+        app.stage.removeChild(textB)
+        app.stage.removeChild(textR)
+        app.stage.addChild(finaly)
+
+        return
+      } 
+
+      if (line.y+line.height > realHeight-sprites.addR.height-100) {
+        console.log("game Over")
+
+        const finallyR = new PIXI.TextStyle({fill: "#D24B4B",
+        fontSize: 200*window.devicePixelRatio,
+        fontFamily: "Tahoma",  fontWeight: "bold"});
+
+        let finaly = new PIXI.Text('RED WIN', finallyR);
+
+        finaly.anchor.x = 0.5
+        finaly.anchor.y = 0.5
+        finaly.x = realWidth/2
+        finaly.y = realHeight/2
+        finaly.rotation = 1.55
+
+        app.stage.removeChild(interFaceB)
+        app.stage.removeChild(interFaceR)
+        app.stage.removeChild(line)
+        app.stage.removeChild(unitsScene)
+        app.stage.removeChild(textB)
+        app.stage.removeChild(textR)
+        app.stage.addChild(finaly)
+        return
+      } 
+
+      requestAnimationFrame(render)
+
+
+     
+    }
+
+
+
+
+  </script>
+</body>
+
+</html>
